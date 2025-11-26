@@ -12,3 +12,5 @@
 <img width="985" height="1493" alt="image" src="https://github.com/user-attachments/assets/e6daffb9-732d-4a32-9a02-3aea8a568208" />
 <img width="982" height="1478" alt="image" src="https://github.com/user-attachments/assets/e65f8cd0-fbc6-4734-8efe-8d8b62e00c93" />
 
+Гледај на YouTube:
+<img width="946" height="175" alt="image" src="https://github.com/user-attachments/assets/b44f2f65-de64-4a71-a275-0373728ac352" />
