@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../models/meal_detail.dart';
 import '../services/meal_service.dart';
+import '../services/favorites_service.dart';
+
 
 class MealDetailScreen extends StatefulWidget {
   final String mealId;
@@ -16,11 +18,13 @@ class MealDetailScreen extends StatefulWidget {
 class _MealDetailScreenState extends State<MealDetailScreen> {
   MealDetail? mealDetail;
   bool isLoading = true;
+  bool isFavorite = false;
 
   @override
   void initState() {
     super.initState();
     loadMealDetail();
+    checkFavoriteStatus();
   }
 
   Future<void> loadMealDetail() async {
@@ -32,6 +36,34 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       });
     } catch (e) {
       setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Грешка: $e')),
+      );
+    }
+  }
+
+  Future<void> checkFavoriteStatus() async {
+    final status = await FavoritesService.isFavorite(widget.mealId);
+    setState(() => isFavorite = status);
+  }
+
+  Future<void> toggleFavorite() async {
+    if (mealDetail == null) return;
+
+    try {
+      if (isFavorite) {
+        await FavoritesService.removeFavorite(widget.mealId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Отстрането од омилени')),
+        );
+      } else {
+        await FavoritesService.addFavorite(mealDetail!);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Додадено во омилени')),
+        );
+      }
+      setState(() => isFavorite = !isFavorite);
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Грешка: $e')),
       );
@@ -60,6 +92,16 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
+            actions: [
+              IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite ? Colors.red : null,
+                ),
+                onPressed: toggleFavorite,
+                tooltip: isFavorite ? 'Отстрани од омилени' : 'Додај во омилени',
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 mealDetail!.strMeal,
@@ -128,7 +170,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     const SizedBox(height: 20),
                     ElevatedButton.icon(
                       onPressed: () {
-                        // Тука може да додадете url_launcher package
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('YouTube: ${mealDetail!.strYoutube}')),
                         );

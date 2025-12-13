@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models/meal_detail.dart';
 import '../services/meal_service.dart';
+import '../services/favorites_service.dart';
 
 class RandomMealScreen extends StatefulWidget {
   const RandomMealScreen({Key? key}) : super(key: key);
@@ -14,6 +15,7 @@ class RandomMealScreen extends StatefulWidget {
 class _RandomMealScreenState extends State<RandomMealScreen> {
   MealDetail? randomMeal;
   bool isLoading = true;
+  bool isFavorite = false;
 
   @override
   void initState() {
@@ -25,12 +27,37 @@ class _RandomMealScreenState extends State<RandomMealScreen> {
     setState(() => isLoading = true);
     try {
       final meal = await MealService.getRandomMeal();
+      final favStatus = await FavoritesService.isFavorite(meal.idMeal);
       setState(() {
         randomMeal = meal;
+        isFavorite = favStatus;
         isLoading = false;
       });
     } catch (e) {
       setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Грешка: $e')),
+      );
+    }
+  }
+
+  Future<void> toggleFavorite() async {
+    if (randomMeal == null) return;
+
+    try {
+      if (isFavorite) {
+        await FavoritesService.removeFavorite(randomMeal!.idMeal);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Отстрането од омилени')),
+        );
+      } else {
+        await FavoritesService.addFavorite(randomMeal!);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Додадено во омилени')),
+        );
+      }
+      setState(() => isFavorite = !isFavorite);
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Грешка: $e')),
       );
@@ -60,6 +87,13 @@ class _RandomMealScreenState extends State<RandomMealScreen> {
             expandedHeight: 300,
             pinned: true,
             actions: [
+              IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite ? Colors.red : null,
+                ),
+                onPressed: toggleFavorite,
+              ),
               IconButton(
                 icon: const Icon(Icons.refresh),
                 onPressed: loadRandomMeal,
